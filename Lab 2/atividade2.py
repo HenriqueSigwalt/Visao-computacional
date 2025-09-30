@@ -23,7 +23,9 @@ def canny(I1,sigma,ti,ts):
             kernel = kernel/np.sum(kernel)
     I1=cv2.filter2D(I1,-1,kernel, borderType=cv2.BORDER_REFLECT101)
 
-    grad_X, grad_y=np.gradient(I1.astype(float))
+    grad_X=cv2.Sobel(I1,cv2.CV_64F,1,0,ksize=w)
+    grad_y=cv2.Sobel(I1,cv2.CV_64F,0,1,ksize=w)
+
     grad_mag=np.sqrt(grad_X**2+grad_y**2)
     grad_dir=np.arctan2(grad_y,grad_X)* 180 / np.pi
 
@@ -94,7 +96,7 @@ ax3.imshow(teste, cmap='gray')"""
 
 plt.figure()
 plt.imshow(Ib, cmap='gray')
-#plt.figure()
-#plt.imshow(teste, cmap='gray')
+plt.figure()
+plt.imshow(teste, cmap='gray')
 
 plt.show()
