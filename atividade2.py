@@ -126,8 +126,6 @@ If = Canny(Ie, 1.4, 0.3, 0.14 )
 #cv2.imshow("Imagem de saída", If)
 
 plt.imshow(If, cmap='gray', vmin=0, vmax=255)
-#plt.title('If')
-#plt.axis('off')
 plt.show()
 
 cv2.waitKey(0)
