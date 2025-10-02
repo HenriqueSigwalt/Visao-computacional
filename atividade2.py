@@ -74,13 +74,13 @@ def Canny(Ie, sig, th, tl):
     Gc[hor] = pc[hor]*(pc[hor] >= leste[hor])*(pc[hor] >= oeste[hor])
 
     diag1 = (dc == 45)
-    Gc[diag1] = pc[diag1]*(pc[diag1] >= nordeste[diag1])*(pc[diag1] >= sudeste[diag1])
+    Gc[diag1] = pc[diag1]*(pc[diag1] >= nordeste[diag1])*(pc[diag1] >= sudoeste[diag1])
 
     ver = (dc == 90)
     Gc[ver] = pc[ver]*(pc[ver] >= norte[ver])*(pc[ver] >= sul[ver])
 
     diag2 = (dc == 135)
-    Gc[diag2] = pc[diag2]*(pc[diag2] >= noroeste[diag2])*(pc[diag2] >= sudoeste[diag2])
+    Gc[diag2] = pc[diag2]*(pc[diag2] >= noroeste[diag2])*(pc[diag2] >= sudeste[diag2])
 
     Gn[1:-1, 1:-1] = Gc
 
