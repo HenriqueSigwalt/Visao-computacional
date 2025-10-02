@@ -7,8 +7,8 @@ from matplotlib import pyplot as plt
 def Canny(Ie, sig, th, tl):
     #KERNEL GAUSSIANO
     
-    w = 6*sig +1
-    h = 2*w + 1
+    w = 6*sig + 1
+    h = (w - 1)//2
 
     j, i = np.mgrid[-h:h+1, -h:h+1]  
     kernelg = (1/(2*np.pi*sig**2)) * np.exp(-(i**2 + j**2)/(2*sig**2))
