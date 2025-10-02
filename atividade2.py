@@ -8,7 +8,7 @@ def Canny(Ie, sig, th, tl):
     #KERNEL GAUSSIANO
     
     w = 6*sig +1
-    h = w//2
+    h = 2*w + 1
 
     j, i = np.mgrid[-h:h+1, -h:h+1]  
     kernelg = (1/(2*np.pi*sig**2)) * np.exp(-(i**2 + j**2)/(2*sig**2))
