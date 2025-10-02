@@ -39,7 +39,7 @@ def Canny(Ie, sig, th, tl):
 
     Ig = np.arctan2(Iy,Ix)
 
-    #plt.imshow(Ig, cmap='jet')
+    #plt.imshow(Ig, cmap='hsv')
     #plt.colorbar()
     #plt.show()
 
