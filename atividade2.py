@@ -101,13 +101,13 @@ def Canny(Ie, sig, th, tl):
 
     #CONECTIVIDADE
 
-    H, W = Gnh.shape
-    val = np.zeros((H, W), dtype=bool)   # mapa de válidos pro Gnl
+    linhas, colunas = Gnh.shape
+    val = np.zeros((linhas, colunas), dtype=bool)   # mapa de válidos pro Gnl
 
     for u, v in np.argwhere(Gnh > 0):
 
-        r0, r1 = max(0, u-1), min(H, u+2)
-        c0, c1 = max(0, v-1), min(W, v+2)
+        r0, r1 = max(0, u-1), min(linhas, u+2)
+        c0, c1 = max(0, v-1), min(colunas, v+2)
 
         val[r0:r1, c0:c1] |= (Gnl[r0:r1, c0:c1] > 0)
 
