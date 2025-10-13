@@ -34,6 +34,8 @@ def Canny(Ie, sig, th, tl):
 
     Im = ((Ix**2)+(Iy**2))**(1/2)
     #cv2.imshow("Im", Im)
+    #plt.imshow(Im, cmap='gray')
+    #plt.show()
 
     #GRADIENTE
 
