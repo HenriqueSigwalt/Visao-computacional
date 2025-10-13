@@ -115,19 +115,18 @@ def Canny(Ie, sig, th, tl):
 
     Gnl = (val.astype(np.uint8) * 255)
 
-    If = cv2.add(Gnh, Gnl)
+    Ib = cv2.add(Gnh, Gnl)
 
     cv2.waitKey(0)
-    return If   
+    return Ib   
 
 
 Ie = cv2.imread(r"C:\Users\avgui\OneDrive\Documentos\CAC3040\Banco de imagens-20250821\castle.jpg", cv2.IMREAD_GRAYSCALE).astype(np.float32)/255.0
 #cv2.imshow("Imagem de entrada", Ie)
-If = Canny(Ie, 1.4, 0.3, 0.14 )
+Ib = Canny(Ie, 1.4, 0.3, 0.14 )
+#cv2.imshow("Imagem de saída", Ib)
 
-#cv2.imshow("Imagem de saída", If)
-
-plt.imshow(If, cmap='gray', vmin=0, vmax=255)
+plt.imshow(Ib, cmap='gray', vmin=0, vmax=255)
 plt.show()
 
 cv2.waitKey(0)
