@@ -1,105 +1,132 @@
 import cv2
 import numpy as np
-from matplotlib import pyplot as plt
 import matplotlib
+from matplotlib import pyplot as plt
 
-#Função de encontrar bordas
-def canny(I1,sigma,ti,ts):
-    linhas, colunas = I1.shape
-    #Define tamanho do kernel
-    w=int(6*sigma+1)
-    kernel = np.zeros((w,w), np.float32)
-    #Aplicação do kernel gaussiano
-    v1 = 1/(2 * np.pi * (sigma**2))
-    v2 = -1/(2 * (sigma**2))
 
-    for y in np.arange(0,w):
-        for x in np.arange(0,w):
-
-            # corrige coordenadas para a fun¸c~ao gaussiana
-            j = y - (w-1)/2
-            i = x - (w-1)/2
-
-            kernel[y,x] = v1 * np.exp(v2*(j**2 + i**2))
-
-            kernel = kernel/np.sum(kernel)
-    I1=cv2.filter2D(I1,-1,kernel, borderType=cv2.BORDER_REFLECT101)
-
-    # Derivada em relação a x (Sobel)
-    Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
-    grad_X = cv2.filter2D(I1, cv2.CV_32F, Kx, borderType=cv2.BORDER_REFLECT101)
-
-    # Derivada em relação a y (Sobel)
-    Ky = Kx.T
-    grad_y = cv2.filter2D(I1, cv2.CV_32F, Ky, borderType=cv2.BORDER_REFLECT101)
-
-    #Magnitude do gradiente
-    grad_mag=np.sqrt(grad_X**2+grad_y**2)
-    #fase do gradiente
-    grad_dir=np.arctan2(grad_y,grad_X)* 180 / np.pi
-
-    #Imagem
-    I2=np.zeros([linhas,colunas],np.uint8)
-    Is=np.zeros([linhas,colunas],np.uint8)
-    Ii=np.zeros([linhas,colunas],np.uint8)
-    Ib=np.zeros([linhas,colunas],np.uint8)
-
-    #Normaliza a magnitude (Não lembro o pq)
-    grad_mag=((grad_mag/(np.max(grad_mag)+1e-10))*255).astype(np.uint8)
-
-    for i in range(1,linhas-1):
-        for j in range(1,colunas-1):
-            theta=grad_dir[i,j]
-            mag=grad_mag[i,j]
-            #Determina quais são os visinhos com base no intervalo onde estão os 
-            if ((theta < -22.5) and (theta>-67.5) or (theta < 157.5) and (theta>112.5)):
-                u=grad_mag[i+1,j+1]
-                v=grad_mag[i-1,j-1]
-            elif ((theta < -112.5) and (theta>-157.5) or (theta < 67.5) and (theta>22.5)):
-                u=grad_mag[i+1,j-1]
-                v=grad_mag[i-1,j+1]
-            elif ((theta < -67.5) and (theta>-112.5) or (theta < 112.5) and (theta>67.5)):
-                u=grad_mag[i+1,j]
-                v=grad_mag[i-1,j]
-            else:
-                u=grad_mag[i,j-1]
-                v=grad_mag[i,j+1]
-            #Se o pixel atual tiver gradiente maior que os vizinhos coloca ele na imagem I2
-            if (u<=mag)and(v<=mag):
-                I2[i,j]=mag
-
-    #Faz a limiarização superior da imagem
-    Is[I2>ts]=I2[I2>ts]
-    #Faz a limiarização inferior da imagem
-    Ii[I2>ti]=I2[I2>ti]
-    #Calcula a diferença das duas limiarizações
-    Ii=Ii-Is
+def Canny(Ie, sig, th, tl):
+    #KERNEL GAUSSIANO
     
-    #Percorre toda a imagem superior
-    for i in range(linhas):
-        for j in range(colunas):
-            #Se o pixel foi identificado como borda
-            if(Is[i,j]>0):
-                #Defini todos os pixel em volta dele como borda
-                Ib[i-1:i+2,j-1:j+2]=Ii[i-1:i+2,j-1:j+2]
-    #Defini todos os pixels da imagem superior como borda
-    Ib=Ib+Is
+    w = 6*sig + 1
+    h = (w - 1)//2
 
-    #Retorna as imagens geradas
-    return Ib
+    j, i = np.mgrid[-h:h+1, -h:h+1]  
+    kernelg = (1/(2*np.pi*sig**2)) * np.exp(-(i**2 + j**2)/(2*sig**2))
+    kernelg = kernelg/kernelg.sum()
 
-I1=cv2.imread("Lab 2\Moodle\castle.jpg",cv2.IMREAD_GRAYSCALE)
-#tamanho do kernel
-w=3
-sigma=(w-1)/6
+    #FILTRO 2D
+    Is = cv2.filter2D(Ie, -1, kernelg, borderType=cv2.BORDER_REFLECT101)
 
-#Limiares inferiores e superiores
-ti=0.01
-ts=0.1
+    #cv2.imshow("Imagem suavizada", Is)
 
-#Realiza a detecção de bordas
-Ib=canny(I1,sigma,ti,ts)
+    #DETECÇÃO DE BORDA
 
-plt.figure()
-plt.imshow(Ib, cmap='gray')
+    Kx = np.array([[-1, 0, 1], [-2, 0, 2], [-1, 0, 1]], np.float32)
+    Ky = np.transpose(Kx)
+
+    Ix = cv2.filter2D(Is, -1, Kx, borderType=cv2.BORDER_REFLECT101)
+    Iy = cv2.filter2D(Is, -1, Ky, borderType=cv2.BORDER_REFLECT101)
+
+    #cv2.imshow("Ix", Ix)
+    #cv2.imshow("Iy", Iy)
+
+    #MAGNITUDE
+
+    Im = ((Ix**2)+(Iy**2))**(1/2)
+    #cv2.imshow("Im", Im)
+    #plt.imshow(Im, cmap='gray')
+    #plt.show()
+
+    #GRADIENTE
+
+    Ig = np.arctan2(Iy,Ix)
+
+    #plt.imshow(Ig, cmap='hsv')
+    #plt.colorbar()
+    #plt.show()
+
+    #SUPRESSÃO DE NÃO MÁXIMOS 
+
+    #Como só importa a direção e não a orientação (sinal), é possivel fazer apenas uma normalização e comparar o "excedente"
+    theta = (np.rad2deg(Ig) + 180.0) % 180.0
+
+    dir = np.zeros(theta.shape, np.uint8) # Já que dir inicia zerado, os intervalos para 0°/180° (theta < 22.5 $ theta > 157.5), que dariam 0, já estão certos.
+    dir[(theta >= 22.5) & (theta < 67.5)]   = 45
+    dir[(theta >= 67.5) & (theta < 112.5)]  = 90    #substitui direto no dir os valores certos
+    dir[(theta >= 112.5) & (theta < 157.5)] = 135
+
+    M = Im.astype(np.float32)
+    Gn = np.zeros(M.shape, np.float32)
+
+    pc = M[1:-1, 1:-1]      #ignora as bordas da imagem para fazer a supressão
+    dc = dir[1:-1, 1:-1]
+
+    leste      =   M[1:-1, 2:  ]     
+    oeste      =   M[1:-1, 0:-2]     
+    norte      =   M[0:-2,  1:-1]    
+    sul        =   M[2:  ,  1:-1]    
+    nordeste   =   M[0:-2,  2:  ]    
+    sudoeste   =   M[2:  ,  0:-2]    
+    noroeste   =   M[0:-2,  0:-2]    
+    sudeste    =   M[2:  ,  2:  ]    
+
+    Gc = np.zeros(pc.shape, np.float32)
+
+    hor = (dc == 0)
+    Gc[hor] = pc[hor]*(pc[hor] >= leste[hor])*(pc[hor] >= oeste[hor])
+
+    diag2 = (dc == 45)
+    Gc[diag2] = pc[diag2]*(pc[diag2] >= noroeste[diag2])*(pc[diag2] >= sudeste[diag2])
+
+    ver = (dc == 90)
+    Gc[ver] = pc[ver]*(pc[ver] >= norte[ver])*(pc[ver] >= sul[ver])
+
+    diag1 = (dc == 135)
+    Gc[diag1] = pc[diag1]*(pc[diag1] >= nordeste[diag1])*(pc[diag1] >= sudoeste[diag1])
+
+    Gn[1:-1, 1:-1] = Gc
+
+    Ign = (Gn / (Gn.max() + 1e-8) * 255).astype(np.uint8)
+    #cv2.imshow("Ign", Ign)
+
+
+    #LIMIALIZAÇÃO DUPLO
+
+    Gnh = (Gn >= th).astype(np.uint8) * 255          
+    Gnl = (Gn >= tl).astype(np.uint8) * 255
+    #cv2.imshow("Gnl ", Gnl)
+
+    Gnl = Gnl - Gnh
+
+    #cv2.imshow("Gnh ", Gnh)
+    #cv2.imshow("Gnl ", Gnl)
+
+    #CONECTIVIDADE
+
+    linhas, colunas = Gnh.shape
+    val = np.zeros((linhas, colunas), dtype=bool)   # mapa de válidos pro Gnl
+
+    for u, v in np.argwhere(Gnh > 0):
+
+        r0, r1 = max(0, u-1), min(linhas, u+2)
+        c0, c1 = max(0, v-1), min(colunas, v+2)
+
+        val[r0:r1, c0:c1] |= (Gnl[r0:r1, c0:c1] > 0)
+
+    Gnl = (val.astype(np.uint8) * 255)
+
+    Ib = cv2.add(Gnh, Gnl)
+
+    cv2.waitKey(0)
+    return Ib   
+
+
+Ie = cv2.imread(r"C:\Users\avgui\OneDrive\Documentos\CAC3040\Banco de imagens-20250821\castle.jpg", cv2.IMREAD_GRAYSCALE).astype(np.float32)/255.0
+#cv2.imshow("Imagem de entrada", Ie)
+Ib = Canny(Ie, 1.4, 0.3, 0.14 )
+#cv2.imshow("Imagem de saída", Ib)
+
+plt.imshow(Ib, cmap='gray', vmin=0, vmax=255)
 plt.show()
+
+cv2.waitKey(0)
