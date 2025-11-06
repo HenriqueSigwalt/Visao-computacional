@@ -36,63 +36,73 @@ def matchLetters(region,letters):
                 letter={"nome":i["nome"],"fit":percent}
     return letter["nome"]
 
-def analyse_img(Itarget, letters):
-    linha, coluna, layers = Itarget.shape
-    Ibin = np.zeros((linha,coluna),np.uint8)
-
-    Ri=np.float32(Itarget[:,:,2])
-    Gi=np.float32(Itarget[:,:,1])
-    Bi=np.float32(Itarget[:,:,0])
-    dist=((Bi-B)**2 + (Gi-G)**2 + (Ri-R)**2)**(1/2)
-    index=(dist<30)
-    Ibin[index]=255
-    #plt.imshow(Itarget)
-    #plt.show()
-
-    contours, hierarchy = cv2.findContours(Ibin,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    corners=[cv2.boundingRect(i) for i in contours]
-    corners=sorted(corners,key=lambda corner:corner[0],reverse=False)
-
-    if(corners[0][1]>corners[1][1]):
-        up_left=corners[1]
-        down_left=corners[0]
-    else:
-        up_left=corners[0]
-        down_left=corners[1]
-    if(corners[2][1]>corners[3][1]):
-        up_right=corners[3]
-        down_right=corners[2]
-    else:
-        up_right=corners[2]
-        down_right=corners[3]
-
-    cv2.rectangle(Itarget,(up_left[0],up_left[1]),(up_left[0]+up_left[2],up_left[1]+up_left[3]),(255,0,0),2)
-    cv2.rectangle(Itarget,(down_left[0],down_left[1]),(down_left[0]+down_left[2],down_left[1]+down_left[3]),(255,0,0),2)
-    cv2.rectangle(Itarget,(up_right[0],up_right[1]),(up_right[0]+up_right[2],up_right[1]+up_right[3]),(255,0,0),2)
-    cv2.rectangle(Itarget,(down_right[0],down_right[1]),(down_right[0]+down_right[2],down_right[1]+down_right[3]),(255,0,0),2)
+def analyse_img(Itarget, letters, count):
     #plt.imshow(Itarget)
     #plt.show()
     
-    pts_src=np.array([[up_left[0],up_left[1]],[down_left[0],down_left[1]+down_left[3]],
-                     [up_right[0]+up_right[2],up_right[1]],[down_right[0]+down_right[2],down_right[1]+down_right[3]]])
-    pts_dst=np.array([[0,0],[0,linha],[coluna,0],[coluna,linha]])
-
-    h, _ = cv2.findHomography(pts_src,pts_dst)
-    Itarget=cv2.warpPerspective(Itarget,h,(coluna,linha))
     #plt.imshow(Itarget)
     #plt.show()
+    
+    flag=False
+    while not flag:
+        if not flag:
+            linha, coluna, layers = Itarget.shape
+            Ibin = np.zeros((linha,coluna),np.uint8)
 
-    Inova=Itarget[up_left[3]:linha-down_right[3],up_left[2]:coluna-down_right[2]]
-    plt.imshow(Inova)
-    plt.show()
+            Ri=np.float32(Itarget[:,:,2])
+            Gi=np.float32(Itarget[:,:,1])
+            Bi=np.float32(Itarget[:,:,0])
+            dist=((Bi-B)**2 + (Gi-G)**2 + (Ri-R)**2)**(1/2)
+            index=(dist<30)
+            Ibin[index]=255
+            contours, hierarchy = cv2.findContours(Ibin,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+            corners=[cv2.boundingRect(i) for i in contours]
+            corners=sorted(corners,key=lambda corner:corner[0],reverse=False)
+
+            if(corners[0][1]>corners[1][1]):
+                up_left=corners[1]
+                down_left=corners[0]
+            else:
+                up_left=corners[0]
+                down_left=corners[1]
+            if(corners[2][1]>corners[3][1]):
+                up_right=corners[3]
+                down_right=corners[2]
+            else:
+                up_right=corners[2]
+                down_right=corners[3]
+            Itarget_draw=Itarget.copy()
+            cv2.rectangle(Itarget_draw,(up_left[0],up_left[1]),(up_left[0]+up_left[2],up_left[1]+up_left[3]),(255,0,0),2)
+            cv2.rectangle(Itarget_draw,(down_left[0],down_left[1]),(down_left[0]+down_left[2],down_left[1]+down_left[3]),(255,0,0),2)
+            cv2.rectangle(Itarget_draw,(up_right[0],up_right[1]),(up_right[0]+up_right[2],up_right[1]+up_right[3]),(255,0,0),2)
+            cv2.rectangle(Itarget_draw,(down_right[0],down_right[1]),(down_right[0]+down_right[2],down_right[1]+down_right[3]),(255,0,0),2)
+            
+            pts_src=np.array([[up_left[0],up_left[1]],[down_left[0],down_left[1]+down_left[3]],
+                            [up_right[0]+up_right[2],up_right[1]],[down_right[0]+down_right[2],down_right[1]+down_right[3]]])
+            pts_dst=np.array([[25,25],[25,linha-25],[coluna-25,25],[coluna-25,linha-25]])
+
+            h, _ = cv2.findHomography(pts_src,pts_dst)
+            Itarget=cv2.warpPerspective(Itarget,h,(coluna,linha))
+        if(up_left[0]==down_left[0] and up_left[1]==up_right[1]):
+            flag=True
+        #plt.imshow(Itarget_draw)
+        #plt.show()
+        flag=True
+
+    Inova=Itarget[up_left[3]+25:linha-down_right[3]-25,up_left[2]+25:coluna-down_right[2]-25]
+    #plt.imshow(Inova)
+    #plt.show()
     linha, coluna, layers = Inova.shape
     Igray=np.ones((linha,coluna),np.uint8)*255
-    for i in range(linha):
-        for j in range(coluna):
-            if(Inova[i,j,0]==255 and Inova[i,j,1]==255 and Inova[i,j,2]==255):
-                Igray[i,j]=0
-    #plt.imshow(Igray,cmap="gray")
-    #plt.show()
+    Ri=np.float32(Inova[:,:,2])
+    Gi=np.float32(Inova[:,:,1])
+    Bi=np.float32(Inova[:,:,0])
+    dist=((Bi-255)**2 + (Gi-255)**2 + (Ri-255)**2)**(1/2)
+    index=(dist<30)
+    Igray[index]=0
+
+    plt.imshow(Igray,cmap="gray")
+    plt.show()
 
     contours, hierarchy = cv2.findContours(Igray,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     bounds=[cv2.boundingRect(i) for i in contours]
@@ -118,8 +128,10 @@ def analyse_img(Itarget, letters):
             linhas[-1]["End"]=i[0]+i[2]
             linhas=sorted(linhas,key=lambda line:line["Start"])
     
+    print(f"Resultado:{count}")
     for i in linhas:
-        print(i["Letters"])
+        if i["Letters"] != "" and i["Letters"] != " ":
+            print(i["Letters"])
     plt.imshow(Inova)
     plt.show()
     

@@ -36,4 +36,4 @@ for i in range(8):
     #plt.imshow(Itarget)
     #plt.show()
 
-    analyse_img(Itarget,letters)
+    analyse_img(Itarget,letters,i)
