@@ -22,13 +22,13 @@ def matchLetters(region,letters):
                         new_region[a,j]=255
             #Compara as duas letras
             compare=i["region"]-new_region
-            if i["nome"]=="R":
-                plt.imshow(region,cmap="gray")
-                plt.figure()
-                plt.imshow(new_region,cmap="gray")
-                plt.figure()
-                plt.imshow(compare,cmap="gray")
-                plt.show()
+            #if i["nome"]=="R":
+                #plt.imshow(region,cmap="gray")
+                #plt.figure()
+                #plt.imshow(new_region,cmap="gray")
+                #plt.figure()
+                #plt.imshow(compare,cmap="gray")
+                #plt.show()
             #Verifica qual a porcentagem de match
             remain=np.count_nonzero(compare)
             percent=remain/(linha*coluna)
@@ -49,8 +49,8 @@ def analyse_img(Itarget, letters, count):
             dist=((Bi-B)**2 + (Gi-G)**2 + (Ri-R)**2)**(1/2)
             index=(dist<30)
             Ibin[index]=255
-            plt.imshow(Ibin,cmap="gray")
-            plt.show()
+            #plt.imshow(Ibin,cmap="gray")
+            #plt.show()
             #Encontra e ordena as regiões de cada canto da etiqueta com base na coordenada x
             contours, hierarchy = cv2.findContours(Ibin,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
             corners=[cv2.boundingRect(i) for i in contours]
@@ -74,22 +74,22 @@ def analyse_img(Itarget, letters, count):
             cv2.rectangle(Itarget_draw,(down_left[0],down_left[1]),(down_left[0]+down_left[2],down_left[1]+down_left[3]),(255,0,0),2)
             cv2.rectangle(Itarget_draw,(up_right[0],up_right[1]),(up_right[0]+up_right[2],up_right[1]+up_right[3]),(255,0,0),2)
             cv2.rectangle(Itarget_draw,(down_right[0],down_right[1]),(down_right[0]+down_right[2],down_right[1]+down_right[3]),(255,0,0),2)
-            
+            if(up_left[0]==down_left[0] and up_left[1]==up_right[1]): #Para a repetição se as pontas estiverem alinhadas
+                flag=True
+                break
             pts_src=np.array([[up_left[0],up_left[1]],[down_left[0],down_left[1]+down_left[3]],
                             [up_right[0]+up_right[2],up_right[1]],[down_right[0]+down_right[2],down_right[1]+down_right[3]]])
             pts_dst=np.array([[25,25],[25,linha-25],[coluna-25,25],[coluna-25,linha-25]])
             #Ajusta a imagem para não ficar distorcida
             h, _ = cv2.findHomography(pts_src,pts_dst)
             Itarget=cv2.warpPerspective(Itarget,h,(coluna,linha))
-        if(up_left[0]==down_left[0] and up_left[1]==up_right[1]): #Para a repetição se as pontas estiverem alinhadas
-            flag=True
         plt.imshow(Itarget_draw)
         plt.show()
 
     #Remove a região externa da imagem, binariza e inverte
     Inova=Itarget[up_left[3]+25:linha-down_right[3]-25,up_left[2]+25:coluna-down_right[2]-25]
-    plt.imshow(Inova)
-    plt.show()
+    #plt.imshow(Inova)
+    #plt.show()
     
     linha, coluna, layers = Inova.shape
     Igray=np.ones((linha,coluna),np.uint8)*255
@@ -100,8 +100,8 @@ def analyse_img(Itarget, letters, count):
     index=(dist<30)
     Igray[index]=0
 
-    plt.imshow(Igray,cmap="gray")
-    plt.show()
+    #plt.imshow(Igray,cmap="gray")
+    #plt.show()
 
     #Encontra os ocontornos das letras e ordena com base na coordenada x
     contours, hierarchy = cv2.findContours(Igray,cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -132,11 +132,12 @@ def analyse_img(Itarget, letters, count):
             linhas[-1]["End"]=i[0]+i[2]
             linhas=sorted(linhas,key=lambda line:line["Start"])
     
+    print(f"Resultado imagem {count}")
     for i in linhas:
         #Mostra as linhas identificadas, excluindo linhas invalidas
         if i["Letters"] != "" and i["Letters"] != " ":
             print(i["Letters"])
-    plt.imshow(Inova)
-    plt.show()
+    #plt.imshow(Inova)
+    #plt.show()
     
     return

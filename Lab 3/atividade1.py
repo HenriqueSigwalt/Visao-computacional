@@ -32,13 +32,13 @@ for i in bounds:
     letters[letter_count]["region"]=template[i[1]:i[1]+i[3],i[0]:i[0]+i[2]]
     letter_count+=1
 
-plt.imshow(template_cor)
-plt.show()
+#plt.imshow(template_cor)
+#plt.show()
 
 #Processa as etiquetas
-for i in range(1):
+for i in range(8):
     Itarget=cv2.imread(f"Lab 3/Moodle/banco_de_imagens/im{i+1}.png")
-    plt.imshow(Itarget)
-    plt.show()
+    #plt.imshow(Itarget)
+    #plt.show()
 
-    analyse_img(Itarget,letters,i)
+    analyse_img(Itarget,letters,i+1)
