@@ -57,7 +57,7 @@ def identifyDict(img):
     letter_count=0
     for i in linhas:
         for j in i["Letters"]:
-            letters[letter_count]["Region"]=template_inv[j[1]:j[1]+j[3],j[0]-2:j[0]+j[2]]
+            letters[letter_count]["Region"]=template_inv[j[1]:j[1]+j[3],j[0]:j[0]+j[2]]
             letter_count+=1
 
     #plt.imshow(template)
@@ -79,17 +79,13 @@ def matchLetters(region,letters):
                     new_region[a,j]=255
         #Compara as duas letras
         compare=i["Region"]-new_region
-        teste=cv2.bilateralFilter(new_region.copy(),3,10,10)
-        if i["Nome"]=="P":
-            plt.imshow(teste,cmap="gray")
+        """if i["Nome"]=="W":
+            plt.imshow(region,cmap="gray")
             plt.figure()
             plt.imshow(new_region,cmap="gray")
             plt.figure()
             plt.imshow(compare,cmap="gray")
-            plt.figure()
-        if i["Nome"]=="9":
-            plt.imshow(compare,cmap="gray")
-            plt.show()
+            plt.show()"""
         #Verifica qual a porcentagem de match
         remain=np.count_nonzero(compare)
         percent=remain/(linha*coluna)
@@ -160,52 +156,7 @@ def platePrepare(img_url):
     plate=img_new
     return plate
 
-def retryPlate(img_url):
-
-    #Prepara a placa a ser analizada
-    img_retry=cv2.imread(img_url)
-    kernel=np.ones([4,4])
-    eroded=cv2.erode(img_retry,kernel)
-    img_bin=cv2.cvtColor(eroded,cv2.COLOR_BGR2GRAY)
-    #plt.imshow(img_retry)
-    #plt.figure()
-
-    filtered=cv2.bilateralFilter(img_bin,11,17,17)
-    #plt.imshow(eroded)
-    #plt.figure()
-    edges=cv2.Canny(filtered,30,20)
-    #plt.imshow(edges)
-    #plt.figure()
-
-    contours,_ =cv2.findContours(edges.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
-    contours=sorted(contours,key=cv2.contourArea,reverse=True)[:1]
-    #teste=cv2.drawContours(img.copy(),contours,-1,(0,255,0),1)
-    #plt.imshow(teste)
-    bounds=cv2.approxPolyDP(contours[0],10,True)
-    teste=cv2.polylines(img_retry.copy(),[bounds],True,(0,255,0),1)
-    #plt.imshow(teste)
-    #plt.figure()
-    xbound=sorted(bounds,key=lambda line:line[0,0],reverse=False)
-    ybound=sorted(bounds,key=lambda line:line[0,1],reverse=False)
-    top_left=sorted(xbound[0:2], key=lambda line:line[0,1],reverse=False)[0][0]
-    top_right=sorted(xbound[2:4],key=lambda line:line[0,1],reverse=False)[0][0]
-    bot_left=sorted(xbound[0:2], key=lambda line:line[0,1],reverse=True)[0][0]
-    bot_right=sorted(xbound[2:4],key=lambda line:line[0,1],reverse=True)[0][0]
-    length=round(xbound[3][0,0]-xbound[0][0,0])
-    height=round(ybound[3][0,1]-ybound[0][0,1])
-    pts_src=np.array([top_left,bot_left,top_right,bot_right])
-    pts_dst=np.array([[0,0],[0,height],[length,0],[length,height]])
-    h,_ = cv2.findHomography(pts_src,pts_dst)
-    img_new=cv2.warpPerspective(img_retry,h,(length,height))
-    #kernel=np.ones([3,3])
-    #img_new=cv2.erode(img_new,kernel)
-    #plt.imshow(img_new)
-
-    plt.show()
-    plate=img_new
-    return plate
-
-def readPlate(plate, letters,method):
+def readPlate(plate, letters):
     text=""
 
     #Binariza região de interesse
@@ -213,11 +164,11 @@ def readPlate(plate, letters,method):
     new_bin=np.zeros((lin,col),np.uint8)
     for i in range(lin):
         for j in range(col):
-            if(np.all(plate[i,j]>=130)):
+            if(np.all(plate[i,j]>=150)):
                 new_bin[i,j]=255
     new_bin=cv2.bitwise_not(new_bin)
-    #plt.imshow(new_bin,cmap="gray")
-    #plt.figure()
+    plt.imshow(new_bin,cmap="gray")
+    plt.figure()
     
     #Encontra contorno da placa e ajusta perspectiva até estar reta
     contours, _ = cv2.findContours(new_bin, cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -236,18 +187,11 @@ def readPlate(plate, letters,method):
         compr=i[2]
         if x+compr>col:
             compr=col-x
-        if method==1:
-            if (alt>round(lin*0.45)) and (alt<round(lin*0.8)) and (compr>round(col*0.01))and (compr<round(col*0.5)): #Remove contornos indesejados
-                cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(0,255,0),2)
-                text+=matchLetters(new_bin[y-1:y+alt+1,x-1:x+i[2]+1],letters)
-            else:
-                cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(255,0,0),2)
-        elif method==2:
-            if (alt>round(lin*0.5)) and (compr>round(col*0.01))and (compr<round(col*0.5)): #Remove contornos indesejados
-                cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(0,255,0),2)
-                text+=matchLetters(new_bin[y:y+alt,x:x+i[2]],letters)
-            else:
-                cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(255,0,0),2)
+        if (alt>round(lin*0.5)) and (alt<round(lin*0.8)) and (compr>round(col*0.01))and (compr<round(col*0.5)): #Remove contornos indesejados
+            cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(0,255,0),2)
+            text+=matchLetters(new_bin[y-1:y+alt+1,x-1:x+i[2]+1],letters)
+        else:
+            cv2.rectangle(plate,(x,y),(x+i[2],y+alt),(255,0,0),2)
     plt.imshow(plate)
 
     plt.show()
