@@ -28,7 +28,7 @@ def identifyDict(img):
             if np.all(template[i,j]==0):
                 template_inv[i,j]=255
     #plt.imshow(template_inv,cmap="gray")
-    #plt.show()
+    #plt.figure()
 
     #Encontra os contornos e divide as linhas
     contours, hierarchy=cv2.findContours(template_inv,cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
@@ -79,22 +79,22 @@ def matchLetters(region,letters):
                     new_region[a,j]=255
         #Compara as duas letras
         compare=i["Region"]-new_region
-        teste=cv2.bilateralFilter(new_region.copy(),3,10,10)
-        if i["Nome"]=="P":
-            plt.imshow(teste,cmap="gray")
-            plt.figure()
-            plt.imshow(new_region,cmap="gray")
-            plt.figure()
-            plt.imshow(compare,cmap="gray")
-            plt.figure()
-        if i["Nome"]=="9":
-            plt.imshow(compare,cmap="gray")
-            plt.show()
+        #if i["Nome"]=="A":
+            #plt.imshow(teste,cmap="gray")
+            #plt.figure()
+            #plt.imshow(new_region,cmap="gray")
+            #plt.figure()
+            #plt.imshow(compare,cmap="gray")
+            #plt.figure()
+        #if i["Nome"]=="9":
+            #plt.imshow(compare,cmap="gray")
+            #plt.show()
         #Verifica qual a porcentagem de match
         remain=np.count_nonzero(compare)
         percent=remain/(linha*coluna)
         if(percent<letter["fit"]):#Se for o mais parecido, salva como resultado
             letter={"nome":i["Nome"],"fit":percent}
+    #plt.show()
     return letter["nome"]
 
 def platePrepare(img_url):
@@ -103,11 +103,14 @@ def platePrepare(img_url):
     img_base=cv2.imread("trabalho/banco_de_imagens/placa_base.jpg")
     base_bin=cv2.cvtColor(img_base,cv2.COLOR_BGR2GRAY)
     base_lin, base_col, _= img_base.shape
+    #plt.imshow(img_base)
+    #plt.figure()
 
     #Prepara a placa a ser analizada
     img=cv2.imread(img_url)
     img_bin=cv2.cvtColor(img,cv2.COLOR_BGR2GRAY)
     #plt.imshow(img_bin, cmap="gray")
+    #plt.figure()
 
     #Procura a imagem base na imagem sendo analisada
     sift=cv2.SIFT_create()
@@ -116,7 +119,7 @@ def platePrepare(img_url):
     bf=cv2.BFMatcher(cv2.NORM_L2,crossCheck=True)
     matches=bf.match(des1,des2)
     matches=sorted(matches, key= lambda match:match.distance, reverse=False)
-    #show_match=cv2.drawMatches(img_base,k1,img,k2,matches,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
+    show_match=cv2.drawMatches(img_base.copy(),k1,img,k2,matches,None,flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
     #plt.imshow(cv2.cvtColor(show_match, cv2.COLOR_BGR2RGB))
     #plt.figure()
 
@@ -133,6 +136,7 @@ def platePrepare(img_url):
     lines=cv2.perspectiveTransform(new_size,m)
     #img_rect=cv2.polylines(img.copy(),[np.int32(lines)],True,(0,255,0),2,cv2.LINE_AA)
     #plt.imshow(img_rect)
+    #plt.figure()
 
     #Define região de interesse a ser usada com base nos pontos encontrados
     xbound=sorted(lines,key=lambda line:line[0,0],reverse=False)
@@ -156,7 +160,7 @@ def platePrepare(img_url):
     kernel=np.ones([2,3],np.uint8)
     img_new=cv2.erode(img_new,kernel)
 
-    plt.show()
+    #plt.show()
     plate=img_new
     return plate
 
@@ -179,10 +183,8 @@ def retryPlate(img_url):
 
     contours,_ =cv2.findContours(edges.copy(),cv2.RETR_EXTERNAL,cv2.CHAIN_APPROX_SIMPLE)
     contours=sorted(contours,key=cv2.contourArea,reverse=True)[:1]
-    #teste=cv2.drawContours(img.copy(),contours,-1,(0,255,0),1)
-    #plt.imshow(teste)
     bounds=cv2.approxPolyDP(contours[0],10,True)
-    teste=cv2.polylines(img_retry.copy(),[bounds],True,(0,255,0),1)
+    #teste=cv2.polylines(img_retry.copy(),[bounds],True,(0,255,0),1)
     #plt.imshow(teste)
     #plt.figure()
     xbound=sorted(bounds,key=lambda line:line[0,0],reverse=False)
@@ -197,11 +199,9 @@ def retryPlate(img_url):
     pts_dst=np.array([[0,0],[0,height],[length,0],[length,height]])
     h,_ = cv2.findHomography(pts_src,pts_dst)
     img_new=cv2.warpPerspective(img_retry,h,(length,height))
-    #kernel=np.ones([3,3])
-    #img_new=cv2.erode(img_new,kernel)
     #plt.imshow(img_new)
 
-    plt.show()
+    #plt.show()
     plate=img_new
     return plate
 
